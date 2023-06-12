@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -25,6 +24,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fileReader := bufio.NewScanner(file)
+	numLines, err := countLines(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // countLines counts the number of lines in a file
