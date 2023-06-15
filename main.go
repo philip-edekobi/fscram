@@ -22,6 +22,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -46,21 +47,30 @@ func main() {
 	*/
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	var fileName string = "file.txt"
+	if len(os.Args) <= 2 {
+		if len(os.Args) == 2 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
+			// display help
+		} else {
+			fmt.Println("Usage: fscram <input file> <output file>")
+			os.Exit(1)
+		}
+	}
+	var inFileName string = os.Args[1]
+	var outFileName string = os.Args[2]
 
-	file, err := os.Open("file.txt")
+	file, err := os.Open(inFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	outFile, err := os.Create("out.txt")
+	outFile, err := os.Create(outFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer outFile.Close()
 
-	numLines, err := filePkg.CountLines(fileName) // number of lines in file
+	numLines, err := filePkg.CountLines(inFileName) // number of lines in file
 	if err != nil {
 		log.Fatal(err)
 	}
