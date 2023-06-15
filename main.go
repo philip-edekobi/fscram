@@ -91,7 +91,7 @@ func main() {
 	fileController := &FileControl{fileReader, outFile, sync.Mutex{}}
 	wg.Add(goNum)
 
-	for i := 0; i < goNum; i++ {
+	for i := 1; i <= goNum; i++ {
 		go randomize(i, regulatorChannel, fileController)
 	}
 
@@ -137,8 +137,10 @@ func randomize(idNum int, supervisor chan int, fileController *FileControl) {
 	defer wg.Done()
 	lines := []string{}
 
+	time.Sleep(time.Duration(rand.Float64()*100*float64(goNum/idNum)) * time.Millisecond)
+
 	for i := 0; i < bufferLen; i++ {
-		time.Sleep(time.Duration(rand.Float64() * 1000))
+		time.Sleep(time.Duration(rand.Float64()*5000*float64(goNum/idNum)) * time.Millisecond)
 
 		fileController.mutex.Lock()
 
@@ -151,9 +153,15 @@ func randomize(idNum int, supervisor chan int, fileController *FileControl) {
 		runtime.Gosched()
 	}
 
-	time.Sleep(time.Duration(rand.Float64() * 1000))
+	time.Sleep(time.Duration(rand.Float64()*1000*float64(goNum/idNum)) * time.Millisecond)
 
 	for _, line := range lines {
+		time.Sleep(time.Duration(rand.Float64()*6000*float64(goNum/idNum)) * time.Millisecond)
+
+		fileController.mutex.Lock()
 		fileController.outFile.WriteString(line + "\n")
+		fileController.mutex.Unlock()
+
+		runtime.Gosched()
 	}
 }
