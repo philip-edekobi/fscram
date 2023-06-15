@@ -50,5 +50,5 @@ Fscram accepts two arguments. The first is the input file which is the original 
 To install this package run:
 
 ```bash
-$ go install github.com/philip-edekobi/fscram
+$ go install github.com/philip-edekobi/fscram@latest
 ```
