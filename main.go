@@ -1,23 +1,3 @@
-/*
-	fscram is a program to reshuffle files line by line
-
-	It works by making goroutines that have buffers which split the lines equally to then rewrite them
-	into a new file randomly
-
-	The max number of goroutines allowed is 1024
-
-	If the file has n lines and n is less than or equal 1024, n goroutines are created and each goroutine
-	processes one line.
-
-	If the number of lines in the file exceeds 1024, a sharing formula is used
-
-	The sharing formula involves determining a maximum size for the buffers of each goroutine
-
-	This maximum size can be determined by the formula: math.Floor(n/1024) + 1 if n mod 1024 != 0 else 1
-	or math.Floor(n/1024) if n mod 1024 == 0
-			n = number of lines in file
-*/
-
 package main
 
 import (
