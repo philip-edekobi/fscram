@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	filePkg "fscram/file"
+	filePkg "github.com/philip-edekobi/fscram/file"
 )
 
 const MAXGONUM = 1024
