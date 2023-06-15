@@ -85,9 +85,11 @@ func randomize(idNum int, inFileCtrl *filePkg.ReaderSync, outFileCtrl *filePkg.F
 	lines := []string{}
 
 	time.Sleep(time.Duration(rand.Float64()*100*float64(goNum/idNum)) * time.Millisecond)
+	runtime.Gosched()
 
 	for i := 0; i < bufferLen; i++ {
-		time.Sleep(time.Duration(rand.Float64()*5000*float64(goNum/idNum)) * time.Millisecond)
+		runtime.Gosched()
+		time.Sleep(time.Duration(rand.Float64()*3450*float64(goNum/idNum)) * time.Millisecond)
 
 		inFileCtrl.Mutex.Lock()
 
@@ -99,14 +101,17 @@ func randomize(idNum int, inFileCtrl *filePkg.ReaderSync, outFileCtrl *filePkg.F
 		lines = append(lines, newLine)
 		runtime.Gosched()
 	}
+	fmt.Println("Goroutine", idNum, goNum, lines)
 
-	time.Sleep(time.Duration(rand.Float64()*1000*float64(goNum/idNum)) * time.Millisecond)
+	time.Sleep(time.Duration(rand.Float64()*950*float64(goNum/idNum)) * time.Millisecond)
 
 	for _, line := range lines {
-		time.Sleep(time.Duration(rand.Float64()*6000*float64(goNum/idNum)) * time.Millisecond)
+		runtime.Gosched()
+		time.Sleep(time.Duration(rand.Float64()*1345*float64(goNum/idNum)) * time.Millisecond)
 
 		outFileCtrl.Mutex.Lock()
 		outFileCtrl.File.WriteString(line + "\n")
 		outFileCtrl.Mutex.Unlock()
+		runtime.Gosched()
 	}
 }
