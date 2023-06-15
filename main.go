@@ -23,10 +23,10 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"runtime"
 	"sync"
@@ -36,8 +36,9 @@ import (
 // FileControl provides a mechanism that allows safe concurrent access to the lines in a file.
 // It encapsulates a bufio Scanner and a mutex to control access
 type FileControl struct {
-	file  *bufio.Scanner
-	mutex sync.Mutex
+	inFile  *bufio.Scanner
+	outFile *os.File
+	mutex   sync.Mutex
 }
 
 const MAXGONUM = 1024
@@ -61,6 +62,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
+
+	outFile, err := os.Create("out.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outFile.Close()
 
 	numLines, err := countLines(fileName) // number of lines in file
 	if err != nil {
@@ -80,7 +88,7 @@ func main() {
 
 	fileReader := bufio.NewScanner(file)
 
-	fileController := &FileControl{fileReader, sync.Mutex{}}
+	fileController := &FileControl{fileReader, outFile, sync.Mutex{}}
 	wg.Add(goNum)
 
 	for i := 0; i < goNum; i++ {
@@ -130,15 +138,22 @@ func randomize(idNum int, supervisor chan int, fileController *FileControl) {
 	lines := []string{}
 
 	for i := 0; i < bufferLen; i++ {
-		time.Sleep(750)
+		time.Sleep(time.Duration(rand.Float64() * 1000))
+
 		fileController.mutex.Lock()
-		fileController.file.Scan()
-		newLine := fileController.file.Text()
+
+		fileController.inFile.Scan()
+		newLine := fileController.inFile.Text()
+
 		fileController.mutex.Unlock()
 
 		lines = append(lines, newLine)
 		runtime.Gosched()
 	}
 
-	fmt.Println(lines)
+	time.Sleep(time.Duration(rand.Float64() * 1000))
+
+	for _, line := range lines {
+		fileController.outFile.WriteString(line + "\n")
+	}
 }
