@@ -22,8 +22,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -31,23 +29,15 @@ import (
 	"runtime"
 	"sync"
 	"time"
-)
 
-// FileControl provides a mechanism that allows safe concurrent access to the lines in a file.
-// It encapsulates a bufio Scanner and a mutex to control access
-type FileControl struct {
-	inFile  *bufio.Scanner
-	outFile *os.File
-	mutex   sync.Mutex
-}
+	filePkg "fscram/file"
+)
 
 const MAXGONUM = 1024
 
 var wg sync.WaitGroup
 var goNum int     // goNum is the number of goroutines required to handle the file <= 1024
 var bufferLen int // bufferLen is the size of the buffer that each goroutines would require to store lines
-
-var regulatorChannel = make(chan int)
 
 func main() {
 	/*
@@ -70,7 +60,7 @@ func main() {
 	}
 	defer outFile.Close()
 
-	numLines, err := countLines(fileName) // number of lines in file
+	numLines, err := filePkg.CountLines(fileName) // number of lines in file
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,52 +78,19 @@ func main() {
 
 	fileReader := bufio.NewScanner(file)
 
-	fileController := &FileControl{fileReader, outFile, sync.Mutex{}}
+	inputFileController := filePkg.NewReaderSync(fileReader)
+	outputFileController := filePkg.NewFileSync(outFile)
+
 	wg.Add(goNum)
 
 	for i := 1; i <= goNum; i++ {
-		go randomize(i, regulatorChannel, fileController)
+		go randomize(i, inputFileController, outputFileController)
 	}
 
 	wg.Wait()
 }
 
-// countLines counts the number of lines in a file
-func countLines(fileName string) (int, error) {
-	var count int
-	lineBreak := byte('\n')
-	tempBuffer := make([]byte, bufio.MaxScanTokenSize)
-
-	file, err := os.Open(fileName)
-	if err != nil {
-		return 0, err
-	}
-
-	for {
-		bufSize, err := file.Read(tempBuffer)
-		if err != nil && err != io.EOF {
-			return 0, err
-		}
-
-		var bufferPosition int
-
-		for {
-			i := bytes.IndexByte(tempBuffer[bufferPosition:], lineBreak)
-			if i == -1 || bufferPosition == bufSize {
-				break
-			}
-			bufferPosition += i + 1
-			count++
-		}
-
-		if err == io.EOF {
-			break
-		}
-	}
-	return count, nil
-}
-
-func randomize(idNum int, supervisor chan int, fileController *FileControl) {
+func randomize(idNum int, inFileCtrl *filePkg.ReaderSync, outFileCtrl *filePkg.FileSync) {
 	defer wg.Done()
 	lines := []string{}
 
@@ -142,12 +99,12 @@ func randomize(idNum int, supervisor chan int, fileController *FileControl) {
 	for i := 0; i < bufferLen; i++ {
 		time.Sleep(time.Duration(rand.Float64()*5000*float64(goNum/idNum)) * time.Millisecond)
 
-		fileController.mutex.Lock()
+		inFileCtrl.Mutex.Lock()
 
-		fileController.inFile.Scan()
-		newLine := fileController.inFile.Text()
+		inFileCtrl.Reader.Scan()
+		newLine := inFileCtrl.Reader.Text()
 
-		fileController.mutex.Unlock()
+		inFileCtrl.Mutex.Unlock()
 
 		lines = append(lines, newLine)
 		runtime.Gosched()
@@ -158,10 +115,8 @@ func randomize(idNum int, supervisor chan int, fileController *FileControl) {
 	for _, line := range lines {
 		time.Sleep(time.Duration(rand.Float64()*6000*float64(goNum/idNum)) * time.Millisecond)
 
-		fileController.mutex.Lock()
-		fileController.outFile.WriteString(line + "\n")
-		fileController.mutex.Unlock()
-
-		runtime.Gosched()
+		outFileCtrl.Mutex.Lock()
+		outFileCtrl.File.WriteString(line + "\n")
+		outFileCtrl.Mutex.Unlock()
 	}
 }
