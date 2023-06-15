@@ -17,7 +17,7 @@ The sharing formula involves determining a maximum size for the buffers of each 
 
 This maximum size can be determined by the formula:
 
-    math.Floor(n/1024) + 1 if n mod 1024 != 0 else 1
+    math.Floor(n/1024) + 1 if n mod 1024 != 0
     
 or:
 
